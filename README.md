@@ -124,6 +124,5 @@ prompt = prompt_template.format_prompt(context=context_text, question=query_text
 ---
 
 If you have any feedback or ideas to improve this, feel free to open an issue or contribute!
-```
 
 ---
