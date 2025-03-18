@@ -1,4 +1,3 @@
-# llm_pipeline.py
 import os
 from langchain.document_loaders import PyPDFLoader
 from langchain.schema import Document
@@ -9,7 +8,6 @@ from langchain.prompts import ChatPromptTemplate
 
 CHROMA_PATH = "./chroma_db"
 
-# Load PDF dynamically
 def load_document(file_path):
     if not os.path.exists(file_path):
         print(f"File not found: {file_path}")
@@ -18,7 +16,6 @@ def load_document(file_path):
     loader = PyPDFLoader(file_path)
     return loader.load()
 
-# Split document into chunks
 def split_documents(documents: list[Document]):
     text_splitter = RecursiveCharacterTextSplitter(
         chunk_size=800,
@@ -28,12 +25,10 @@ def split_documents(documents: list[Document]):
     )
     return text_splitter.split_documents(documents)
 
-# Embedding function
 def get_embedding_function():
     embeddings = HuggingFaceEmbeddings(model_name="all-mpnet-base-v2")
     return embeddings
 
-# Add chunks to Chroma DB
 def add_to_chroma(chunks: list[Document], chunk_ids: list[str]):
     db = Chroma(
         persist_directory=CHROMA_PATH,
@@ -43,14 +38,13 @@ def add_to_chroma(chunks: list[Document], chunk_ids: list[str]):
     db.persist()
     return db
 
-# Query pipeline
 def query_rag(db, query_text: str):
-    results = db.similarity_search_with_score(query_text, k=3)
+    results = db.similarity_search_with_score(query_text, k=1)
     context_text = "\n\n---\n\n".join([doc.page_content for doc, _score in results])
 
     Prompt_Template = """
     {question} 
-    I'll we sending the nearest three response : 
+    I'll we sending the nearest response i can get : 
     ___
      {context}
     """
@@ -58,10 +52,8 @@ def query_rag(db, query_text: str):
     prompt_template = ChatPromptTemplate.from_template(Prompt_Template)
     prompt = prompt_template.format_prompt(context=context_text, question=query_text)
     
-    # For now return the prompt (simulate LLM response)
-    return prompt.to_string()  # Replace with actual LLM call if needed
+    return prompt.to_string()  
 
-# Wrapper to process PDF
 def process_pdf_with_llm(file_path):
     documents = load_document(file_path)
     chunks = split_documents(documents)
@@ -69,6 +61,5 @@ def process_pdf_with_llm(file_path):
     db = add_to_chroma(chunks, new_chunk_ids)
     return db
 
-# Answer query using generated DB
 def answer_query_from_pdf(db, query_text):
     return query_rag(db, query_text)
